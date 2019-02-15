@@ -17,21 +17,32 @@
           v-model="loginForm.password"
           name="password"
           auto-complete="on"
-          placeholder="密码"
-          @keyup.enter.native="handleLogin" />
+          placeholder="密码"/>
         <span class="show-pwd" @click="showPwd">
           <svg-icon :icon-class="pwdType === 'password' ? 'eye' : 'eye-open'" />
         </span>
       </el-form-item>
+
+      <el-form-item>
+        <span class="svg-container">
+          <svg-icon icon-class="code" />
+        </span>
+        <el-input
+          v-model="loginForm.captcha"
+          name="captcha"
+          placeholder="验证码"
+          @keyup.enter.native="handleLogin">
+          <template slot="append">
+            <img :src="captchaUrl" @click="captchaHandler" >
+          </template>
+        </el-input>
+      </el-form-item>
+
       <el-form-item>
         <el-button :loading="loading" type="primary" style="width:100%;" @click.native.prevent="handleLogin">
           登录
         </el-button>
       </el-form-item>
-      <div class="tips">
-        <span style="margin-right:20px;">username: admin</span>
-        <span> password: admin</span>
-      </div>
     </el-form>
   </div>
 </template>
@@ -59,7 +70,8 @@ export default {
     return {
       loginForm: {
         username: '',
-        password: ''
+        password: '',
+        captcha: ''
       },
       loginRules: {
         username: [{ required: true, trigger: 'blur', validator: validateUsername }],
@@ -67,7 +79,9 @@ export default {
       },
       loading: false,
       pwdType: 'password',
-      redirect: undefined
+      redirect: undefined,
+      captchaBaseUrl: 'http://103.94.77.31:9998/verifycode?',
+      captchaUrl: 'http://103.94.77.31:9998/verifycode?'
     }
   },
   watch: {
@@ -101,6 +115,9 @@ export default {
           return false
         }
       })
+    },
+    captchaHandler() {
+      this.captchaUrl = this.captchaBaseUrl + Math.random()
     }
   }
 }
@@ -113,7 +130,6 @@ $light_gray:#eee;
 /* reset element-ui css */
 .login-container {
   .el-input {
-    display: inline-block;
     height: 47px;
     width: 85%;
     input {

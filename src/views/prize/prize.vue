@@ -142,7 +142,11 @@ export default {
       if (this.dialogStatus === 'editPrize') {
         //  api: /prize/id put
       } else {
-        setPrize(this.form)
+        const params = new URLSearchParams()
+        params.append('code', this.form.code)
+        params.append('name', this.form.name)
+        params.append('prob', this.form.prob)
+        setPrize(params)
         this.prizes.push(this.form)
         this.form = {
           code: '',

@@ -3,22 +3,21 @@ import request from '@/utils/request'
 export function getPrize(params) {
   return request({
     url: '/prizes',
-    method: 'get'
+    method: 'get',
+    headers: {
+      'X-REQUESTED-WITH': 'XMLHttpRequest'
+    }
   })
 }
 
-export function setPrize(params) {
+export function setPrize(data) {
   return request({
     url: '/prizes',
     method: 'post',
     headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
+      'content-type': 'application/x-www-form-urlencoded'
     },
-    data: {
-      code: params.code,
-      name: params.name,
-      prob: params.prob
-    }
+    data
   })
 }
 
