@@ -106,7 +106,7 @@ export const constantRouterMap = [
       {
         path: '',
         name: 'Record',
-        component: () => import('@/views/record/index'),
+        component: () => import('@/views/record/record'),
         meta: { title: 'Record', icon: 'edit' }
       }
     ]

@@ -42,7 +42,7 @@
       </el-table-column>
       <el-table-column align="center" label="中奖时间" min-width="10%">
         <template slot-scope="scope">
-          {{ scope.row.datetime }}
+          <span style="margin-left: 10px">{{ scope.row.datetime }}</span>
         </template>
       </el-table-column>
       <el-table-column align="center" label="抽奖方式" min-width="7%">

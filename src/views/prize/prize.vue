@@ -7,6 +7,7 @@
       :data="prizes"
       element-loading-text="获取中"
       border
+      stripe
       fit
       highlight-current-row
       style="margin-top: 20px">
