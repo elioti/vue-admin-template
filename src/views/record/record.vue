@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="listQuery.queryName" placeholder="请输入会员账号" style="width: 200px" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-input v-model="listQuery.user" placeholder="请输入会员账号" style="width: 200px" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">搜索</el-button>
       <el-button class="filter-item" type="primary" icon="el-icon-edit" @click="handleCreate">添加</el-button>
       <el-button :loading="downloadLoading" class="filter-item" type="primary" icon="el-icon-download" @click="handleDownload">下载</el-button>
@@ -15,52 +15,52 @@
       highlight-current-row
       style="width: 100%;"
       @sort-change="sortChange">
-      <el-table-column label="编号" sortable="custom" align="center" width="65">
+      <el-table-column label="编号" prop="id" sortable="custom" align="center" width="65">
         <template slot-scope="scope">
-          <span>{{ scope.row.code }}</span>
+          <span>{{ scope.row.id }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="会员账号" align="center" width="65">
+      <el-table-column label="会员账号" align="center" width="130">
         <template slot-scope="scope">
-          <span>{{ scope.row.username }}</span>
+          <span>{{ scope.row.user }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="中奖ID" align="center" width="65">
+      <el-table-column label="中奖ID" align="center" width="130">
         <template slot-scope="scope">
           <span>{{ scope.row.prizeId }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="中奖礼品" align="center" width="65">
+      <el-table-column label="中奖礼品" align="center" width="195">
         <template slot-scope="scope">
           <span>{{ scope.row.prizeName }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="中奖时间" align="center" width="65">
+      <el-table-column label="中奖时间" align="center" width="195">
         <template slot-scope="scope">
           <span>{{ scope.row.datetime }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="抽奖方式" class-name="status-col" width="100">
+      <el-table-column label="抽奖方式" class-name="status-col" width="195">
         <template slot-scope="scope">
           <el-tag :type="scope.row.type | typeToColor">{{ scope.row.type | typeToText }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="抽奖IP" align="center" width="65">
+      <el-table-column label="抽奖IP" align="center" width="130">
         <template slot-scope="scope">
           <span>{{ scope.row.ip }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="是否发送" align="center" width="65">
+      <el-table-column label="是否发送" align="center" width="130">
         <template slot-scope="scope">
           <el-tag :type="scope.row.isSend | sendToColor">{{ scope.row.isSend | sendToText }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="发送时间" align="center" width="65">
+      <el-table-column label="发送时间" align="center" width="130">
         <template slot-scope="scope">
           <span>{{ scope.row.sendTime }}</span>
         </template>
       </el-table-column>
-      <el-table-column align="center" label="操作" min-width="15%">
+      <el-table-column align="center" label="操作" min-width="195">
         <template slot-scope="scope">
           <el-button type="primary" @click="handleUpdate(scope.row)">编辑</el-button>
           <el-button type="danger" @click="handleDelete(scope.row)">删除</el-button>
@@ -72,13 +72,13 @@
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :model="temp" label-position="left" label-width="70px" style="width: 400px; margin-left:50px;">
         <el-form-item label="会员账号">
-          <el-input v-model="temp.username"/>
+          <el-input v-model="temp.user"/>
         </el-form-item>
         <el-form-item label="中奖礼品">
           <el-input v-model="temp.prizeId"/>
         </el-form-item>
         <el-form-item v-if="dialogStatus === 'create'" label="中奖时间" prop="datetime">
-          <el-date-picker v-model="temp.datetime" type="datetime" placeholder="选择时间"/>
+          <el-date-picker v-model="temp.datetime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择时间"/>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -120,9 +120,9 @@ export default {
       listLoading: true,
       listQuery: {
         page: 1,
-        limit: 20,
-        queryName: undefined,
-        order: 'id'
+        limit: 10,
+        user: undefined,
+        ordering: '-id'
       },
       downloadLoading: false,
       textMap: {
@@ -133,9 +133,9 @@ export default {
       dialogFormVisible: false,
       temp: {
         id: undefined,
-        username: '',
+        user: '',
         prizeId: undefined,
-        datetime: new Date()
+        datetime: undefined
       }
     }
   },
@@ -146,9 +146,10 @@ export default {
     getList() {
       this.listLoading = true
       getRecord(this.listQuery).then(response => {
-        this.list = response
+        this.list = response.data.results
+        this.total = response.data.count
+        this.listLoading = false
       })
-      this.total = 4
     },
     // 处理查询请求
     handleFilter() {
@@ -198,9 +199,9 @@ export default {
       const { prop, order } = data
       if (prop === 'id') {
         if (order === 'ascending') {
-          this.listQuery.order = 'id'
+          this.listQuery.ordering = 'id'
         } else {
-          this.listQuery.order = '-id'
+          this.listQuery.ordering = '-id'
         }
         this.handleFilter()
       }
@@ -209,8 +210,8 @@ export default {
     createData() {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
-          createRecord(this.temp).then(() => {
-            this.list.unshift(this.temp)
+          createRecord(this.temp).then(response => {
+            this.list.unshift(response.data)
             this.dialogFormVisible = false
             this.$notify({
               title: '成功',
@@ -227,7 +228,7 @@ export default {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
           const tempData = Object.assign({}, this.temp)
-          updateRecord(tempData).then(() => {
+          updateRecord(tempData.id, tempData).then(() => {
             for (const v of this.list) {
               if (v.id === this.temp.id) {
                 const index = this.list.indexOf(v)

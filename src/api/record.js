@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 增
 export function createRecord(data) {
   return request({
-    url: '/records',
+    url: '/records/',
     method: 'post',
     data
   })
@@ -24,10 +24,10 @@ export function updateRecord(id, data) {
   })
 }
 // 查
-export function getRecord(query) {
+export function getRecord(params) {
   return request({
-    url: '/records',
-    query
+    url: '/records/',
+    params
   })
 }
 
