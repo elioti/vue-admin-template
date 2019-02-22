@@ -1,12 +1,7 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="listQuery.user" placeholder="请输入会员账号" style="width: 200px" class="filter-item" clearable @keyup.enter.native="handleFilter" />
-      <el-button class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">搜索</el-button>
       <el-button class="filter-item" type="primary" icon="el-icon-edit" @click="handleCreate">添加</el-button>
-      <el-button :loading="downloadLoading" class="filter-item" type="primary" icon="el-icon-download" @click="handleDownload">下载</el-button>
-      <el-button class="filter-item" type="primary">一键派送</el-button>
-      <el-button class="filter-item" type="danger">一键清空</el-button>
     </div>
     <el-table
       v-loading="listLoading"
@@ -17,54 +12,28 @@
       highlight-current-row
       style="width: 100%;"
       @sort-change="sortChange">
-      <el-table-column label="编号" prop="id" sortable="custom" align="center" min-width="50px">
+      <el-table-column label="" prop="id" sortable="custom" align="center" min-width="50px">
         <template slot-scope="scope">
           <span>{{ scope.row.id }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="会员账号" align="center" min-width="160px">
+      <el-table-column label="管理账号" align="center" min-width="160px">
         <template slot-scope="scope">
-          <span>{{ scope.row.user }}</span>
+          <span>{{ scope.row.username }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="中奖ID" align="center" min-width="70px">
+      <el-table-column label="超级用户状态" align="center" min-width="70px">
         <template slot-scope="scope">
-          <span>{{ scope.row.prizeId }}</span>
+          <span><i :class="[scope.row.is_superuser===true?'el-icon-success':'el-icon-error', 'el-alert__icon']" :style="scope.row.is_superuser===true?'color: #67c23a':'color:#333333'"/></span>
         </template>
       </el-table-column>
-      <el-table-column label="中奖礼品" align="center" min-width="195px">
+      <el-table-column label="上次登录" align="center" min-width="195px">
         <template slot-scope="scope">
-          <span>{{ scope.row.prizeName }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="中奖时间" align="center" min-width="160px">
-        <template slot-scope="scope">
-          <span>{{ scope.row.datetime | datetimeFilter }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="抽奖方式" class-name="status-col" min-width="96px">
-        <template slot-scope="scope">
-          <el-tag :type="scope.row.type | typeToColor">{{ scope.row.type | typeToText }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="抽奖IP" align="center" min-width="130px">
-        <template slot-scope="scope">
-          <span>{{ scope.row.ip }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="是否发送" align="center" min-width="96px">
-        <template slot-scope="scope">
-          <el-tag :type="scope.row.isSend | sendToColor">{{ scope.row.isSend | sendToText }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="发送时间" align="center" min-width="160px">
-        <template slot-scope="scope">
-          <span>{{ scope.row.sendTime | datetimeFilter }}</span>
+          <span>{{ scope.row.last_login | datetimeFilter }}</span>
         </template>
       </el-table-column>
       <el-table-column align="center" label="操作" min-width="288px">
         <template slot-scope="scope">
-          <el-button :disabled="scope.row.isSend === 1" type="primary" @click="handleSend(scope.$index, scope.row.id)">派送</el-button>
           <el-button type="primary" @click="handleUpdate(scope.row)">编辑</el-button>
           <el-button type="danger" @click="handleDelete(scope.row)">删除</el-button>
         </template>
@@ -92,27 +61,13 @@
   </div>
 </template>
 <script>
-import { getRecord, createRecord, updateRecord, delteRecord } from '../../api/record'
+import { getUser, createUser, updateUser, delteUser } from '../../api/user'
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
 
 export default {
   components: { Pagination },
   filters: {
-    typeToColor(type) {
-      const types = ['success', 'info', 'danger']
-      return types[parseInt(type)]
-    },
-    typeToText(type) {
-      const types = ['自然抽奖', '内定抽奖', '后台添加']
-      return types[parseInt(type)]
-    },
-    sendToColor(status) {
-      const types = ['warning', 'success']
-      return types[parseInt(status)]
-    },
-    sendToText(status) {
-      const types = ['未送出', '已送出']
-      return types[parseInt(status)]
+    statusFilter(flag) {
     },
     datetimeFilter(time) {
       if (time) {
@@ -155,7 +110,7 @@ export default {
   methods: {
     getList() {
       this.listLoading = true
-      getRecord(this.listQuery).then(response => {
+      getUser(this.listQuery).then(response => {
         this.list = response.data.results
         this.total = response.data.count
         this.listLoading = false
@@ -191,7 +146,7 @@ export default {
     },
     // 处理删除记录
     handleDelete(row) {
-      delteRecord(row.id).then(() => {
+      delteUser(row.id).then(() => {
         // 删除细节  todo
         this.$notify({
           title: '成功',
@@ -220,7 +175,7 @@ export default {
     createData() {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
-          createRecord(this.temp).then(response => {
+          createUser(this.temp).then(response => {
             this.list.unshift(response.data)
             this.dialogFormVisible = false
             this.$notify({
@@ -239,7 +194,7 @@ export default {
         if (valid) {
           const tempData = Object.assign({}, this.temp)
           console.log(tempData)
-          updateRecord(tempData.id, tempData).then(() => {
+          updateUser(tempData.id, tempData).then(() => {
             for (const v of this.list) {
               if (v.id === this.temp.id) {
                 const index = this.list.indexOf(v)
@@ -264,7 +219,7 @@ export default {
         isSend: 1,
         sendTime: new Date()
       }
-      updateRecord(id, data).then(response => {
+      updateUser(id, data).then(response => {
         for (const v of this.list) {
           if (v.id === id) {
             const index = this.list.indexOf(v)

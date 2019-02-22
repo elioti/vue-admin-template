@@ -112,6 +112,18 @@ export const constantRouterMap = [
     ]
   },
   {
+    path: '/infos',
+    component: Layout,
+    children: [
+      {
+        path: '',
+        name: 'Info',
+        component: () => import('@/views/info/index'),
+        meta: { title: 'Info', icon: 'edit' }
+      }
+    ]
+  },
+  {
     path: '/nested',
     component: Layout,
     redirect: '/nested/menu1',
@@ -177,6 +189,20 @@ export const constantRouterMap = [
         path: 'https://panjiachen.github.io/vue-element-admin-site/#/',
         meta: { title: 'External Link', icon: 'link' }
       }
+    ]
+  },
+
+  {
+    path: '/system',
+    component: Layout,
+    children: [
+      {
+        path: 'admin',
+        name: 'Admin',
+        component: () => import('@/views/system/user'),
+        meta: { title: 'admin', icon: 'edit' }
+      }
+
     ]
   },
 
