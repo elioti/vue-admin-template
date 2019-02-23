@@ -12,7 +12,7 @@
       highlight-current-row
       style="width: 100%;"
       @sort-change="sortChange">
-      <el-table-column label="" prop="id" sortable="custom" align="center" min-width="50px">
+      <el-table-column label="编号" prop="id" sortable="custom" align="center" min-width="50px">
         <template slot-scope="scope">
           <span>{{ scope.row.id }}</span>
         </template>
