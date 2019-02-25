@@ -42,9 +42,9 @@
           <span>{{ scope.row.datetime | datetimeFilter }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="抽奖方式" class-name="status-col" min-width="96px">
+      <el-table-column label="抽奖方式" class-name="status-col" min-width="86px">
         <template slot-scope="scope">
-          <el-tag :type="scope.row.type | typeToColor">{{ scope.row.type | typeToText }}</el-tag>
+          <el-tag :type="scope.row.type | typeToColor" size="mini">{{ scope.row.type | typeToText }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="抽奖IP" align="center" min-width="130px">
@@ -52,21 +52,17 @@
           <span>{{ scope.row.ip }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="是否发送" align="center" min-width="96px">
-        <template slot-scope="scope">
-          <el-tag :type="scope.row.isSend | sendToColor">{{ scope.row.isSend | sendToText }}</el-tag>
-        </template>
-      </el-table-column>
       <el-table-column label="发送时间" align="center" min-width="160px">
         <template slot-scope="scope">
-          <span>{{ scope.row.sendTime | datetimeFilter }}</span>
+          <span v-show="scope.row.isSend === 1">{{ scope.row.sendTime | datetimeFilter }}</span>
+          <el-tag v-show="scope.row.isSend === 0" type="warning" size="mini" disable-transitions>未送出</el-tag>
         </template>
       </el-table-column>
-      <el-table-column align="center" label="操作" min-width="288px">
+      <el-table-column align="center" label="操作" min-width="228px">
         <template slot-scope="scope">
-          <el-button :disabled="scope.row.isSend === 1" type="primary" @click="handleSend(scope.$index, scope.row.id)">派送</el-button>
-          <el-button type="primary" @click="handleUpdate(scope.row)">编辑</el-button>
-          <el-button type="danger" @click="handleDelete(scope.row)">删除</el-button>
+          <el-button :disabled="scope.row.isSend === 1" size="mini" type="primary" @click="handleSend(scope.$index, scope.row.id)">派送</el-button>
+          <el-button size="mini" type="primary" @click="handleUpdate(scope.row)">编辑</el-button>
+          <el-button size="mini" type="danger" @click="handleDelete(scope.row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -127,6 +123,7 @@ export default {
       total: 0,
       tableKey: 0,
       list: null,
+      down: null,
       listLoading: true,
       listQuery: {
         page: 1,
@@ -204,7 +201,35 @@ export default {
       })
     },
     // 处理下载Excel请求
-    handleDownload() {},
+    handleDownload() {
+      this.downloadLoading = true
+      const title = '抽奖' + new Date().toDateString()
+      getRecord({ limit: 5000 }).then(response => {
+        this.down = response.data.results
+      })
+      import('@/vendor/Export2Excel').then(excel => {
+        const tHeader = ['会员账号', '中奖礼品', '中奖时间', '抽奖IP', '是否发送']
+        const filterVal = ['user', 'prizeName', 'datetime', 'ip', 'isSend']
+        const data = this.formatJson(filterVal, this.down)
+        excel.export_json_to_excel({
+          header: tHeader,
+          data,
+          filename: title
+        })
+        this.downloadLoading = false
+      })
+    },
+    formatJson(filterVal, jsonData) {
+      const types = ['未送出', '已送出']
+      return jsonData.map(v => filterVal.map(j => {
+        if (j === 'isSend') {
+          console.log(typeof v[j])
+          return types[v[j]]
+        } else {
+          return v[j]
+        }
+      }))
+    },
     sortChange(data) {
       const { prop, order } = data
       if (prop === 'id') {
