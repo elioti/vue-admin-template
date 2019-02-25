@@ -18,23 +18,23 @@
       </el-table-column>
       <el-table-column align="center" label="礼品名称" min-width="37.5%">
         <template slot-scope="scope">
-          {{ scope.row.name }}
+          {{ scope.row.prize_name }}
         </template>
       </el-table-column>
       <el-table-column align="center" label="中奖权重" min-width="12.5%">
         <template slot-scope="scope">
-          {{ scope.row.prob }}
+          {{ scope.row.probability }}
         </template>
       </el-table-column>
       <el-table-column label="中奖率" min-width="12.5%" align="center">
         <template slot-scope="scope">
-          {{ scope.row.prob/totalProb | toPer }}
+          {{ scope.row.probability/totalProb | toPer }}
         </template>
       </el-table-column>
       <el-table-column align="center" label="操作" min-width="25%">
         <template slot-scope="scope">
-          <el-button type="primary" @click="editPrize(scope.$index)">编辑</el-button>
-          <el-button type="danger" @click="deletePrize(scope.$index)">删除</el-button>
+          <el-button type="primary" @click="editPrize(scope.row)">编辑</el-button>
+          <el-button type="danger" @click="deletePrize(scope.row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -46,10 +46,10 @@
           <el-input v-model="form.code"/>
         </el-form-item>
         <el-form-item label="礼品名称">
-          <el-input v-model="form.name"/>
+          <el-input v-model="form.prize_name"/>
         </el-form-item>
         <el-form-item label="中奖权重">
-          <el-input v-model="form.prob"/>
+          <el-input v-model="form.probability"/>
         </el-form-item>
       </el-form>
       <div slot="footer">
@@ -61,7 +61,7 @@
 </template>
 
 <script>
-import { getPrize, setPrize } from '../../api/prize'
+import { getPrize, updatePrize, deltePrize, createPrize } from '../../api/prize'
 
 export default {
   filters: {
@@ -87,8 +87,8 @@ export default {
       dialogFormVisible: false,
       form: {
         code: '',
-        name: '',
-        prob: ''
+        prize_name: '',
+        probability: ''
       }
     }
   },
@@ -96,7 +96,7 @@ export default {
     totalProb() {
       let total = 0
       this.prizes.forEach(function(value, index, array) {
-        total += parseFloat(value.prob)
+        total += parseFloat(value.probability)
       })
       return total
     }
@@ -109,14 +109,14 @@ export default {
       this.prizeLoading = true
       // api: /prizes
       getPrize().then(response => {
-        this.prizes = response.data
+        this.prizes = response.data.results
       })
       // this.prizes = [
-      //   { code: 1, name: '8元现金', prob: '21.3' },
-      //   { code: 2, name: '18元现金', prob: '2.3' },
-      //   { code: 3, name: '28元现金', prob: '23.3' },
-      //   { code: 4, name: '38元现金', prob: '1.3' },
-      //   { code: 5, name: '48元现金', prob: '5.3' }
+      //   { code: 1, prize_name: '8元现金', probability: '21.3' },
+      //   { code: 2, prize_name: '18元现金', probability: '2.3' },
+      //   { code: 3, prize_name: '28元现金', probability: '23.3' },
+      //   { code: 4, prize_name: '38元现金', probability: '1.3' },
+      //   { code: 5, prize_name: '48元现金', probability: '5.3' }
       // ]
       this.prizeLoading = false
     },
@@ -125,36 +125,56 @@ export default {
       this.dialogStatus = 'addPrize'
       this.form = {
         code: '',
-        name: '',
-        prob: ''
+        prize_name: '',
+        probability: ''
       }
     },
-    deletePrize(id) {
-      this.prizes.splice(id, 1)
-      // api: /prize/id
+    deletePrize(row) {
+      deltePrize(row.id).then(() => {
+        this.$notify({
+          title: '成功',
+          message: '删除成功',
+          type: 'success',
+          duration: 2000
+        })
+        this.prizes.splice(row.$index, 1)
+      })
     },
-    editPrize(id) {
-      this.form = this.prizes[id]
+    editPrize(row) {
+      this.form = Object.assign({}, row)
       this.dialogFormVisible = true
       this.dialogStatus = 'editPrize'
     },
     dialogConfirm() {
-      this.dialogFormVisible = false
       if (this.dialogStatus === 'editPrize') {
-        //  api: /prize/id put
+        const tempData = Object.assign({}, this.form)
+        updatePrize(tempData.id, tempData).then(() => {
+          for (const v of this.prizes) {
+            if (v.id === this.form.id) {
+              const index = this.prizes.indexOf(v)
+              this.prizes.splice(index, 1, this.form)
+              break
+            }
+          }
+          this.dialogFormVisible = false
+          this.$notify({
+            title: '成功',
+            message: '更新成功',
+            type: 'success',
+            duration: 2000
+          })
+        })
       } else {
-        const params = new URLSearchParams()
-        params.append('code', this.form.code)
-        params.append('name', this.form.name)
-        params.append('prob', this.form.prob)
-        setPrize(params)
-        this.prizes.push(this.form)
-        this.form = {
-          code: '',
-          name: '',
-          prob: ''
-        }
-        // api: /prize post
+        createPrize(this.form).then(response => {
+          this.prizes.push(response.data)
+          this.dialogFormVisible = false
+          this.$notify({
+            title: '成功',
+            message: '创建成功',
+            type: 'success',
+            duration: 2000
+          })
+        })
       }
     }
   }

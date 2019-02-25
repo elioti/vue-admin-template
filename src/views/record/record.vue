@@ -263,7 +263,6 @@ export default {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
           const tempData = Object.assign({}, this.temp)
-          console.log(tempData)
           updateRecord(tempData.id, tempData).then(() => {
             for (const v of this.list) {
               if (v.id === this.temp.id) {

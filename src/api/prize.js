@@ -1,23 +1,33 @@
 import request from '@/utils/request'
 
-export function getPrize(params) {
+// 增
+export function createPrize(data) {
   return request({
-    url: '/prizes',
-    method: 'get',
-    headers: {
-      'X-REQUESTED-WITH': 'XMLHttpRequest'
-    }
+    url: '/prizes/',
+    method: 'post',
+    data
   })
 }
-
-export function setPrize(data) {
+// 删
+export function deltePrize(id) {
   return request({
-    url: '/prizes',
-    method: 'post',
-    headers: {
-      'content-type': 'application/x-www-form-urlencoded'
-    },
+    url: 'prizes/' + id + '/',
+    method: 'delete'
+  })
+}
+// 改
+export function updatePrize(id, data) {
+  return request({
+    url: '/prizes/' + id + '/',
+    method: 'patch',
     data
+  })
+}
+// 查
+export function getPrize(params) {
+  return request({
+    url: '/prizes/',
+    params
   })
 }
 
