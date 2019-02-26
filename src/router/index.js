@@ -87,6 +87,19 @@ export const constantRouterMap = [
   },
 
   {
+    path: '/rules',
+    component: Layout,
+    children: [
+      {
+        path: 'index',
+        name: 'Rule',
+        component: () => import('@/views/rule/index'),
+        meta: { title: 'Rule', icon: 'edit' }
+      }
+    ]
+  },
+
+  {
     path: '/members',
     component: Layout,
     children: [
