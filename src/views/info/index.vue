@@ -1,6 +1,9 @@
 <template>
   <div class="app-container">
     <el-form ref="infoForm" :model="list" label-width="160px" abel-position="left" style="margin-top: 30px">
+      <el-form-item label="活动名称" >
+        <el-input v-model="list.name" style="width: 400px"/>
+      </el-form-item>
       <el-form-item label="是否启用">
         <el-switch v-model="list.is_open" active-color="#13ce66" inactive-color="#ff4949"/>
       </el-form-item>
@@ -23,12 +26,14 @@
   </div>
 </template>
 <script>
-import { createInfo, getInfo } from '../../api/info'
+import { createInfo, getInfo, updateInfo } from '../../api/info'
 export default {
   name: 'Index',
   data() {
     return {
       list: {
+        id: undefined,
+        name: '',
         is_open: false,
         errmsg: '',
         datetimerange: []
@@ -49,6 +54,8 @@ export default {
             duration: 2000
           })
           this.list = {
+            id: undefined,
+            name: '',
             is_open: false,
             errmsg: '',
             datetimerange: []
@@ -64,16 +71,29 @@ export default {
       const tempData = Object.assign({}, this.list)
       tempData['start_time'] = this.list.datetimerange[0]
       tempData['end_time'] = this.list.datetimerange[1]
-      createInfo(tempData).then(response => {
-        this.list = response.data
-        this.list.datetimerange = [response.data.start_time, response.data.end_time]
-        this.$notify({
-          title: '成功',
-          message: '更新成功',
-          type: 'success',
-          duration: 2000
+      if (tempData['id'] === undefined) {
+        createInfo(tempData).then(response => {
+          this.list = response.data
+          this.list.datetimerange = [response.data.start_time, response.data.end_time]
+          this.$notify({
+            title: '成功',
+            message: '更新成功',
+            type: 'success',
+            duration: 2000
+          })
         })
-      })
+      } else {
+        updateInfo(tempData['id'], tempData).then(response => {
+          this.list = response.data
+          this.list.datetimerange = [response.data.start_time, response.data.end_time]
+          this.$notify({
+            title: '成功',
+            message: '更新成功',
+            type: 'success',
+            duration: 2000
+          })
+        })
+      }
     }
   }
 }

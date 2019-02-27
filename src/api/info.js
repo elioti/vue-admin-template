@@ -13,4 +13,11 @@ export function getInfo() {
     url: '/infos/'
   })
 }
-
+// 改
+export function updateInfo(id, data) {
+  return request({
+    url: '/infos/' + id + '/',
+    method: 'patch',
+    data
+  })
+}
