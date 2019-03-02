@@ -1,115 +1,107 @@
 <template>
   <div class="app-container">
-    <div class="header">
-      <el-input v-model="param" type="text" placeholder="请输入会员账号" clearable style="width: 30%" @clear="fetchRecords" @keyup.enter.native="fetchRecords">
-        <el-button slot="append" icon="el-icon-search" @click="fetchRecords"/>
-      </el-input>
-      <el-button type="success" icon="el-icon-plus" style="margin-left: 20px" @click="addRecord">添加记录</el-button>
-      <el-button type="info" @click="addRecord">导入execl</el-button>
-      <el-button type="danger" icon="el-icon-delete" @click="deleteAllRecords">一键删除</el-button>
+    <div class="filter-container">
+      <el-input v-model="listQuery.user" placeholder="请输入会员账号" style="width: 200px" class="filter-item" clearable @keyup.enter.native="handleFilter" />
+      <el-button class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">搜索</el-button>
+      <el-button class="filter-item" type="primary" icon="el-icon-edit" @click="handleCreate">添加</el-button>
+      <el-button :loading="downloadLoading" class="filter-item" type="primary" icon="el-icon-download" @click="handleDownload">下载</el-button>
+      <el-button class="filter-item" type="primary">一键派送</el-button>
+      <el-button class="filter-item" type="danger">一键清空</el-button>
     </div>
     <el-table
-      v-loading="recordsLoading"
-      :data="records"
-      element-loading-text="获取中"
+      v-loading="listLoading"
+      :key="tableKey"
+      :data="list"
       border
       fit
       highlight-current-row
-      style="margin-top: 20px"
-      size="small"
-      @selection-change="handleSelectionChange">
-      <div slot="empty">暂无数据</div>
-      <el-table-column type="selection" min-width="5%"/>
-      <el-table-column align="center" label="编号" min-width="3%">
+      style="width: 100%;"
+      @sort-change="sortChange">
+      <el-table-column label="编号" prop="id" sortable="custom" align="center" min-width="60px">
         <template slot-scope="scope">
-          {{ scope.row.code }}
+          <span>{{ scope.row.id }}</span>
         </template>
       </el-table-column>
-      <el-table-column align="center" label="会员账号" min-width="10%">
+      <el-table-column label="会员账号" align="center" min-width="160px">
         <template slot-scope="scope">
-          {{ scope.row.username }}
+          <span>{{ scope.row.user }}</span>
         </template>
       </el-table-column>
-      <el-table-column align="center" label="中奖ID" min-width="3%">
+      <el-table-column label="中奖ID" align="center" min-width="70px">
         <template slot-scope="scope">
-          {{ scope.row.prizeId }}
+          <span>{{ scope.row.prizeId }}</span>
         </template>
       </el-table-column>
-      <el-table-column align="center" label="中奖礼品" min-width="10%">
+      <el-table-column label="中奖礼品" align="center" min-width="195px">
         <template slot-scope="scope">
-          {{ scope.row.prizeName }}
+          <span>{{ scope.row.prizeName }}</span>
         </template>
       </el-table-column>
-      <el-table-column align="center" label="中奖时间" min-width="10%">
+      <el-table-column label="中奖时间" align="center" min-width="160px">
         <template slot-scope="scope">
-          <span style="margin-left: 10px">{{ scope.row.datetime }}</span>
+          <span>{{ scope.row.datetime | datetimeFilter }}</span>
         </template>
       </el-table-column>
-      <el-table-column align="center" label="抽奖方式" min-width="7%">
+      <el-table-column label="抽奖方式" class-name="status-col" min-width="86px">
         <template slot-scope="scope">
-          <el-tag :type="scope.row.type | typeToColor">{{ scope.row.type | typeToText }}</el-tag>
+          <el-tag :type="scope.row.type | typeToColor" size="mini">{{ scope.row.type | typeToText }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column align="center" label="抽奖IP" min-width="10%">
+      <el-table-column label="抽奖IP" align="center" min-width="130px">
         <template slot-scope="scope">
-          {{ scope.row.ip }}
+          <span>{{ scope.row.ip }}</span>
         </template>
       </el-table-column>
-      <el-table-column align="center" label="是否发送" min-width="7%">
+      <el-table-column label="发送时间" align="center" min-width="160px">
         <template slot-scope="scope">
-          <el-tag :type="scope.row.isSend | sendToColor">{{ scope.row.isSend | sendToText }}</el-tag>
+          <span v-show="scope.row.isSend === 1">{{ scope.row.sendTime | datetimeFilter }}</span>
+          <el-tag v-show="scope.row.isSend === 0" type="warning" size="mini" disable-transitions>未送出</el-tag>
         </template>
       </el-table-column>
-      <el-table-column align="center" label="发送时间" min-width="10%">
+      <el-table-column align="center" label="操作" min-width="228px">
         <template slot-scope="scope">
-          {{ scope.row.sendTime }}
-        </template>
-      </el-table-column>
-      <el-table-column align="center" label="操作" min-width="15%">
-        <template slot-scope="scope">
-          <el-button type="primary" @click="editRecord(scope.$index)">编辑</el-button>
-          <el-button type="danger" @click="deleteRecord(scope.$index)">删除</el-button>
+          <el-button :disabled="scope.row.isSend === 1" size="mini" type="primary" @click="handleSend(scope.$index, scope.row.id)">派送</el-button>
+          <el-button size="mini" type="primary" @click="handleUpdate(scope.row)">编辑</el-button>
+          <el-button size="mini" type="danger" @click="handleDelete(scope.row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
-    <el-pagination
-      :total="1000"
-      background
-      layout="prev, pager, next"
-      style="text-align: center;margin-top: 20px"
-      @current-change="handleCurrentChange"/>
-    <el-dialog
-      :title="titleMap[dialogStatus]"
-      :visible.sync="dialogFormVisible">
-      <el-form :model="record">
-        <el-form-item v-if="dialogStatus === 'editRecord'" label="礼品编号" >
-          {{ record.code }}
-        </el-form-item>
+    <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.page_size" @pagination="getList" />
+
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
+      <el-form ref="dataForm" :model="temp" label-position="left" label-width="70px" style="width: 400px; margin-left:50px;">
         <el-form-item label="会员账号">
-          <el-input v-model="record.username"/>
+          <el-input v-model="temp.user"/>
         </el-form-item>
         <el-form-item label="中奖礼品">
-          <el-input v-model="record.prizeId"/>
+          <el-input v-model="temp.prizeId"/>
+        </el-form-item>
+        <el-form-item v-if="dialogStatus === 'create'" label="中奖时间" prop="datetime">
+          <el-date-picker v-model="temp.datetime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择时间"/>
         </el-form-item>
       </el-form>
-      <div slot="footer">
+      <div slot="footer" class="dialog-footer">
         <el-button @click="dialogFormVisible = false">取消</el-button>
-        <el-button @click="dialogConfirm">确定</el-button>
+        <el-button type="primary" @click="dialogStatus==='create'?createData():updateData()">确定</el-button>
       </div>
     </el-dialog>
   </div>
 </template>
-
 <script>
+import { getRecord, createRecord, updateRecord, delteRecord } from '../../api/record'
+import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
+
 export default {
+  name: 'Record',
+  components: { Pagination },
   filters: {
-    typeToColor(status) {
+    typeToColor(type) {
       const types = ['success', 'info', 'danger']
-      return types[parseInt(status)]
+      return types[parseInt(type)]
     },
-    typeToText(status) {
+    typeToText(type) {
       const types = ['自然抽奖', '内定抽奖', '后台添加']
-      return types[parseInt(status)]
+      return types[parseInt(type)]
     },
     sendToColor(status) {
       const types = ['warning', 'success']
@@ -118,108 +110,200 @@ export default {
     sendToText(status) {
       const types = ['未送出', '已送出']
       return types[parseInt(status)]
+    },
+    datetimeFilter(time) {
+      if (time) {
+        return time.split('.')[0].replace('T', ' ')
+      } else {
+        return time
+      }
     }
   },
   data() {
     return {
-      recordsLoading: true,
-      records: null,
-      record: {
-        code: '',
-        username: '',
-        prizeId: '',
-        prizeName: '',
-        datetime: '',
-        type: '',
-        ip: '',
-        isSend: '',
-        sendTime: ''
+      total: 0,
+      tableKey: 0,
+      list: null,
+      down: null,
+      listLoading: true,
+      listQuery: {
+        page: 1,
+        page_size: 20,
+        user: undefined,
+        ordering: '-id'
       },
-      titleMap: {
-        addRecord: '新增记录',
-        editRecord: '编辑记录'
+      downloadLoading: false,
+      textMap: {
+        create: '添加',
+        update: '编辑'
       },
       dialogStatus: '',
       dialogFormVisible: false,
-      multipleSelection: [],
-      param: '',
-      currentPage: 1
+      temp: {
+        id: undefined,
+        user: '',
+        prizeId: undefined,
+        datetime: new Date()
+      }
     }
   },
   created() {
-    this.fetchRecords()
+    this.getList()
   },
   methods: {
-    fetchRecords() {
-      if (this.param === '') {
-        this.records = [
-          { code: '1', username: 'test2', prizeId: '1', prizeName: 'eqeqe', datetime: '20190301', type: '0', ip: '192.168.0.1', isSend: '0', sendTime: '20190301' },
-          { code: '2', username: 'test2', prizeId: '1', prizeName: 'eqeqe', datetime: '20190301', type: '1', ip: '192.168.0.1', isSend: '1', sendTime: '20190301' },
-          { code: '3', username: 'test2', prizeId: '1', prizeName: 'eqe3qe', datetime: '20190301', type: '1', ip: '192.168.0.1', isSend: '1', sendTime: '20190301' },
-          { code: '4', username: 'test2', prizeId: '31', prizeName: 'eq33eqe', datetime: '20190301', type: '2', ip: '192.168.0.1', isSend: '0', sendTime: '20190301' }
-        ]
-      } else {
-        this.records = [
-          { code: '1', username: 'test2', prizeId: '1', prizeName: 'eqeqe', datetime: '20190301', type: '0', ip: '192.168.0.1', isSend: '0', sendTime: '20190301' },
-          { code: '2', username: 'test2', prizeId: '1', prizeName: 'eqeqe', datetime: '20190301', type: '1', ip: '192.168.0.1', isSend: '1', sendTime: '20190301' },
-          { code: '3', username: 'test2', prizeId: '1', prizeName: 'eqe3qe', datetime: '20190301', type: '1', ip: '192.168.0.1', isSend: '0', sendTime: '20190301' },
-          { code: '4', username: 'test2', prizeId: '31', prizeName: 'eq33eqe', datetime: '20190301', type: '2', ip: '192.168.0.1', isSend: '1', sendTime: '20190301' },
-          { code: '5', username: 'test2', prizeId: '12', prizeName: 'eqeqe', datetime: '20190301', type: '0', ip: '192.168.0.1', isSend: '1', sendTime: '20190301' },
-          { code: '6', username: 'test2', prizeId: '1', prizeName: 'eqe3qe', datetime: '20190301', type: '0', ip: '192.168.0.1', isSend: '0', sendTime: '20190301' },
-          { code: '7', username: 'test2', prizeId: '1', prizeName: 'eqe3qe', datetime: '20190301', type: '0', ip: '192.168.0.1', isSend: '0', sendTime: '20190301' },
-          { code: '8', username: 'test2', prizeId: '1', prizeName: 'eqeqe', datetime: '20190301', type: '1', ip: '192.168.0.1', isSend: '0', sendTime: '20190301' },
-          { code: '9', username: 'test2', prizeId: '1', prizeName: 'eqeqe', datetime: '20190301', type: '0', ip: '192.168.0.1', isSend: '0', sendTime: '20190301' },
-          { code: '11', username: 'test1', prizeId: '1', prizeName: 'eqeqe', datetime: '20190301', type: '1', ip: '192.168.0.1', isSend: '0', sendTime: '20190301' },
-          { code: '12', username: 'test1', prizeId: '1', prizeName: 'eqeqe', datetime: '20190301', type: '1', ip: '192.168.0.1', isSend: '0', sendTime: '20190301' },
-          { code: '13', username: 'test1', prizeId: '1', prizeName: 'eqeqe', datetime: '20190301', type: '1', ip: '192.168.0.1', isSend: '0', sendTime: '20190301' },
-          { code: '14', username: 'test1', prizeId: '1', prizeName: 'eqeqe', datetime: '20190301', type: '1', ip: '192.168.0.1', isSend: '0', sendTime: '20190301' },
-          { code: '15', username: 'test1', prizeId: '1', prizeName: 'eqeqe', datetime: '20190301', type: '1', ip: '192.168.0.1', isSend: '0', sendTime: '20190301' },
-          { code: '16', username: 'test1', prizeId: '1', prizeName: 'eqeqe', datetime: '20190301', type: '1', ip: '192.168.0.1', isSend: '0', sendTime: '20190301' }
-        ]
+    getList() {
+      this.listLoading = true
+      getRecord(this.listQuery).then(response => {
+        this.list = response.data.results
+        this.total = response.data.count
+        this.listLoading = false
+      })
+    },
+    // 处理查询请求
+    handleFilter() {
+      this.listQuery.page = 1
+      this.getList()
+    },
+    // 处理添加记录
+    handleCreate() {
+      this.temp = {
+        id: undefined,
+        user: '',
+        prizeId: undefined,
+        datetime: new Date()
       }
-      this.recordsLoading = true
-
-      this.recordsLoading = false
-    },
-    addRecord() {
+      this.dialogStatus = 'create'
       this.dialogFormVisible = true
-      this.dialogStatus = 'addRecord'
-      this.record = {
-        code: '',
-        username: '',
-        prizeId: '',
-        prizeName: '',
-        datetime: '',
-        type: '',
-        ip: '',
-        isSend: '',
-        sendTime: ''
-      }
+      this.$nextTick(() => {
+        this.$refs['dataForm'].clearValidate()
+      })
     },
-    deleteRecord(id) {
-      this.records.splice(id, 1)
-    },
-    editRecord(id) {
-      this.record = this.records[id]
+    // 处理更改记录
+    handleUpdate(row) {
+      this.temp = Object.assign({}, row) // copy obj
+      this.dialogStatus = 'update'
       this.dialogFormVisible = true
-      this.dialogStatus = 'editRecord'
+      this.$nextTick(() => {
+        this.$refs['dataForm'].clearValidate()
+      })
     },
-    dialogConfirm() {
-      this.dialogFormVisible = false
-      if (this.dialogStatus === 'editRecord') {
-        //  api: /record/id put
-      } else {
-        this.records.push(this.record)
-        this.record = {
-          code: '',
-          name: '',
-          prob: ''
+    // 处理删除记录
+    handleDelete(row) {
+      delteRecord(row.id).then(() => {
+        // 删除细节  todo
+        this.$notify({
+          title: '成功',
+          message: '删除成功',
+          type: 'success',
+          duration: 2000
+        })
+        const index = this.list.indexOf(row)
+        this.list.splice(index, 1)
+      })
+    },
+    // 处理下载Excel请求
+    handleDownload() {
+      this.downloadLoading = true
+      const title = '抽奖' + new Date().toDateString()
+      getRecord({ page_size: 5000 }).then(response => {
+        this.down = response.data.results
+      })
+      import('@/vendor/Export2Excel').then(excel => {
+        const tHeader = ['会员账号', '中奖礼品', '中奖时间', '抽奖IP', '是否发送']
+        const filterVal = ['user', 'prizeName', 'datetime', 'ip', 'isSend']
+        const data = this.formatJson(filterVal, this.down)
+        excel.export_json_to_excel({
+          header: tHeader,
+          data,
+          filename: title
+        })
+        this.downloadLoading = false
+      })
+    },
+    formatJson(filterVal, jsonData) {
+      const types = ['未送出', '已送出']
+      return jsonData.map(v => filterVal.map(j => {
+        if (j === 'isSend') {
+          console.log(typeof v[j])
+          return types[v[j]]
+        } else {
+          return v[j]
         }
-        // api: /record post
+      }))
+    },
+    sortChange(data) {
+      const { prop, order } = data
+      if (prop === 'id') {
+        if (order === 'ascending') {
+          this.listQuery.ordering = 'id'
+        } else {
+          this.listQuery.ordering = '-id'
+        }
+        this.handleFilter()
       }
     },
-    handleSelectionChange(val) {
-      this.multipleSelection = val
+    // 新增记录
+    createData() {
+      this.$refs['dataForm'].validate((valid) => {
+        if (valid) {
+          createRecord(this.temp).then(response => {
+            this.list.unshift(response.data)
+            this.dialogFormVisible = false
+            this.$notify({
+              title: '成功',
+              message: '创建成功',
+              type: 'success',
+              duration: 2000
+            })
+          })
+        }
+      })
+    },
+    // 更新记录
+    updateData() {
+      this.$refs['dataForm'].validate((valid) => {
+        if (valid) {
+          const tempData = Object.assign({}, this.temp)
+          updateRecord(tempData.id, tempData).then(() => {
+            for (const v of this.list) {
+              if (v.id === this.temp.id) {
+                const index = this.list.indexOf(v)
+                this.list.splice(index, 1, this.temp)
+                break
+              }
+            }
+            this.dialogFormVisible = false
+            this.$notify({
+              title: '成功',
+              message: '更新成功',
+              type: 'success',
+              duration: 2000
+            })
+          })
+        }
+      })
+    },
+    // 处理派送
+    handleSend(index, id) {
+      const data = {
+        isSend: 1,
+        sendTime: new Date()
+      }
+      updateRecord(id, data).then(response => {
+        for (const v of this.list) {
+          if (v.id === id) {
+            const index = this.list.indexOf(v)
+            this.list.splice(index, 1, response.data)
+            break
+          }
+        }
+        this.$notify({
+          title: '成功',
+          message: '派送成功',
+          type: 'success',
+          duration: 2000
+        })
+      })
     },
     deleteAllRecords() {
       this.$confirm('该操作会永久删除所有信息，是否继续？', '提示', {
@@ -229,22 +313,14 @@ export default {
       }).then(() => {
         this.$message({ type: 'success', message: '删除成功' })
         // api /records delete
-        this.records = null
+        this.list = null
       }).catch(() => {
         this.$message({
           type: 'info',
           message: '已取消删除'
         })
       })
-    },
-    handleCurrentChange(cpage) {
-      this.currentPage = cpage
     }
   }
 }
 </script>
-
-<style scoped>
-
-</style>
-

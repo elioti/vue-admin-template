@@ -1,184 +1,258 @@
 <template>
   <div class="app-container">
-    <div class="header">
-      <el-input v-model="param" type="text" placeholder="请输入会员账号" clearable style="width: 30%" @clear="fetchMembers" @keyup.enter.native="fetchMembers">
-        <el-button slot="append" icon="el-icon-search" @click="fetchMembers"/>
-      </el-input>
-      <el-button type="success" icon="el-icon-plus" style="margin-left: 20px" @click="addMember">添加会员</el-button>
-      <el-button type="info" @click="addMember">导入execl</el-button>
-      <el-button type="danger" icon="el-icon-delete" @click="deleteAllMembers">一键删除</el-button>
+    <div class="filter-container">
+      <el-input v-model="listQuery.user" placeholder="请输入会员账号" style="width: 200px" class="filter-item" clearable @keyup.enter.native="handleFilter" />
+      <el-button class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">搜索</el-button>
+      <el-button class="filter-item" type="primary" icon="el-icon-edit" @click="handleCreate">添加</el-button>
+      <el-button class="filter-item" type="danger">一键清空</el-button>
     </div>
     <el-table
-      v-loading="membersLoading"
-      :data="members"
-      element-loading-text="获取中"
+      v-loading="listLoading"
+      :key="tableKey"
+      :data="list"
       border
       fit
       highlight-current-row
-      style="margin-top: 20px"
-      size="small"
-      @selection-change="handleSelectionChange">
-      <div slot="empty">暂无数据</div>
-      <el-table-column type="selection" min-width="12.5%"/>
-      <el-table-column align="center" label="编号" min-width="12.5%">
+      style="width: 100%;"
+      @sort-change="sortChange">
+      <el-table-column label="编号" prop="id" sortable="custom" align="center" min-width="60px">
         <template slot-scope="scope">
-          {{ scope.row.code }}
+          <span>{{ scope.row.id }}</span>
         </template>
       </el-table-column>
-      <el-table-column align="center" label="会员账号" min-width="25%">
+      <el-table-column label="会员账号" align="center" min-width="160px">
         <template slot-scope="scope">
-          {{ scope.row.username }}
+          <span>{{ scope.row.user }}</span>
         </template>
       </el-table-column>
-      <el-table-column align="center" label="抽奖次数" min-width="12.5%">
+      <el-table-column label="活动次数" align="center" min-width="60px">
         <template slot-scope="scope">
-          {{ scope.row.number }}
+          <span>{{ scope.row.score }}</span>
         </template>
       </el-table-column>
-      <el-table-column align="center" label="添加时间" min-width="25%">
+      <el-table-column label="顺序" align="center" min-width="70px">
         <template slot-scope="scope">
-          {{ scope.row.datetime }}
+          <span v-html="seqeFilter(scope.row)"/>
         </template>
       </el-table-column>
-      <el-table-column align="center" label="操作" min-width="25%">
+      <el-table-column label="添加时间" align="center" min-width="195px">
         <template slot-scope="scope">
-          <el-button type="primary" @click="editMember(scope.$index)">编辑</el-button>
-          <el-button type="danger" @click="deleteMember(scope.$index)">删除</el-button>
+          <span>{{ scope.row.addTime | datetimeFilter }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" label="操作" min-width="228px">
+        <template slot-scope="scope">
+          <el-button size="mini" type="primary" @click="handleUpdate(scope.row)">编辑</el-button>
+          <el-button size="mini" type="danger" @click="handleDelete(scope.row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
-    <el-pagination
-      :total="1000"
-      background
-      layout="prev, pager, next"
-      style="text-align: center;margin-top: 20px"
-      @current-change="handleCurrentChange"/>
-    <el-dialog
-      :title="titleMap[dialogStatus]"
-      :visible.sync="dialogFormVisible">
-      <el-form :model="member">
-        <el-form-item v-if="dialogStatus === 'editMember'" label="礼品编号" >
-          {{ member.code }}
-        </el-form-item>
+    <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.page_size" @pagination="getList" />
+
+    <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
+      <el-form ref="dataForm" :model="temp" label-position="left" label-width="70px" style="width: 400px; margin-left:50px;">
         <el-form-item label="会员账号">
-          <el-input v-model="member.username"/>
+          <el-input v-model="temp.user"/>
         </el-form-item>
-        <el-form-item label="抽奖次数">
-          <el-input v-model="member.number"/>
+        <el-form-item label="总顺序">
+          <el-input v-model="temp.sequence"/>
+        </el-form-item>
+        <el-form-item label="下次序号">
+          <el-input v-model="temp.flag"/>
+        </el-form-item>
+        <el-form-item label="次数">
+          <el-input v-model="temp.score"/>
+        </el-form-item>
+        <el-form-item label="添加时间" prop="datetime">
+          <el-date-picker v-model="temp.addTime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择时间"/>
         </el-form-item>
       </el-form>
-      <div slot="footer">
+      <div slot="footer" class="dialog-footer">
         <el-button @click="dialogFormVisible = false">取消</el-button>
-        <el-button @click="dialogConfirm">确定</el-button>
+        <el-button type="primary" @click="dialogStatus==='create'?createData():updateData()">确定</el-button>
       </div>
     </el-dialog>
   </div>
 </template>
-
 <script>
+import { getRule, createRule, updateRule, delteRule } from '../../api/rule'
+import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
+
 export default {
+  name: 'Member',
+  components: { Pagination },
+  filters: {
+    datetimeFilter(time) {
+      if (time) {
+        return time.split('.')[0].replace('T', ' ')
+      } else {
+        return time
+      }
+    }
+  },
   data() {
     return {
-      membersLoading: true,
-      members: null,
-      member: {
-        code: '',
-        username: '',
-        number: '',
-        datetime: ''
+      total: 0,
+      tableKey: 0,
+      list: null,
+      down: null,
+      listLoading: true,
+      listQuery: {
+        page: 1,
+        page_size: 20,
+        user: undefined,
+        ordering: '-id'
       },
-      titleMap: {
-        addMember: '新增会员',
-        editMember: '编辑会员'
+      textMap: {
+        create: '添加',
+        update: '编辑'
       },
       dialogStatus: '',
       dialogFormVisible: false,
-      multipleSelection: [],
-      param: '',
-      currentPage: 1
+      temp: {
+        id: undefined,
+        user: '',
+        score: undefined,
+        sequence: undefined,
+        addTime: new Date(),
+        flag: undefined
+      }
     }
   },
   created() {
-    this.fetchMembers()
+    this.getList()
   },
   methods: {
-    fetchMembers() {
-      if (this.param === '') {
-        this.members = [
-          { code: 1, username: 'test1', number: 2, datetime: '20190123' },
-          { code: 2, username: 'test2', number: 4, datetime: '20190123' }
-        ]
-      } else {
-        this.members = [
-          { code: 1, username: 'june1', number: 2, datetime: '20190123' },
-          { code: 2, username: 'june2', number: 4, datetime: '20190123' },
-          { code: 3, username: 'june3', number: 14, datetime: '20190123' },
-          { code: 4, username: 'june4', number: 24, datetime: '20190123' },
-          { code: 5, username: 'june5', number: 34, datetime: '20190123' }
-        ]
-      }
-      this.membersLoading = true
-
-      this.membersLoading = false
-    },
-    addMember() {
-      this.dialogFormVisible = true
-      this.dialogStatus = 'addMember'
-      this.member = {
-        code: '',
-        username: '',
-        number: '',
-        datetime: ''
-      }
-    },
-    deleteMember(id) {
-      this.members.splice(id, 1)
-    },
-    editMember(id) {
-      this.member = this.members[id]
-      this.dialogFormVisible = true
-      this.dialogStatus = 'editMember'
-    },
-    dialogConfirm() {
-      this.dialogFormVisible = false
-      if (this.dialogStatus === 'editMember') {
-        //  api: /member/id put
-      } else {
-        this.members.push(this.member)
-        this.member = {
-          code: '',
-          name: '',
-          prob: ''
+    seqeFilter(row) {
+      const orderList = row.sequence.split('|')
+      return orderList.map((v, i) => {
+        if (i + 1 < row.flag) {
+          return '<span style="color:red">' + v + '</span>'
+        } else {
+          return v
         }
-        // api: /member post
+      }).join('|')
+    },
+    getList() {
+      this.listLoading = true
+      getRule(this.listQuery).then(response => {
+        this.list = response.data.results
+        this.total = response.data.count
+        this.listLoading = false
+      })
+    },
+    // 处理查询请求
+    handleFilter() {
+      this.listQuery.page = 1
+      this.getList()
+    },
+    // 处理添加记录
+    handleCreate() {
+      this.temp = {
+        id: undefined,
+        user: '',
+        sequence: undefined,
+        addTime: new Date(),
+        flag: 1
+      }
+      this.dialogStatus = 'create'
+      this.dialogFormVisible = true
+      this.$nextTick(() => {
+        this.$refs['dataForm'].clearValidate()
+      })
+    },
+    // 处理更改记录
+    handleUpdate(row) {
+      this.temp = Object.assign({}, row) // copy obj
+      this.dialogStatus = 'update'
+      this.dialogFormVisible = true
+      this.$nextTick(() => {
+        this.$refs['dataForm'].clearValidate()
+      })
+    },
+    // 处理删除记录
+    handleDelete(row) {
+      delteRule(row.id).then(() => {
+        // 删除细节  todo
+        this.$notify({
+          title: '成功',
+          message: '删除成功',
+          type: 'success',
+          duration: 2000
+        })
+        const index = this.list.indexOf(row)
+        this.list.splice(index, 1)
+      })
+    },
+    sortChange(data) {
+      const { prop, order } = data
+      if (prop === 'id') {
+        if (order === 'ascending') {
+          this.listQuery.ordering = 'id'
+        } else {
+          this.listQuery.ordering = '-id'
+        }
+        this.handleFilter()
       }
     },
-    handleSelectionChange(val) {
-      this.multipleSelection = val
+    // 新增记录
+    createData() {
+      this.$refs['dataForm'].validate((valid) => {
+        if (valid) {
+          createRule(this.temp).then(response => {
+            this.list.unshift(response.data)
+            this.dialogFormVisible = false
+            this.$notify({
+              title: '成功',
+              message: '创建成功',
+              type: 'success',
+              duration: 2000
+            })
+          })
+        }
+      })
     },
-    deleteAllMembers() {
+    // 更新记录
+    updateData() {
+      this.$refs['dataForm'].validate((valid) => {
+        if (valid) {
+          const tempData = Object.assign({}, this.temp)
+          updateRule(tempData.id, tempData).then(() => {
+            for (const v of this.list) {
+              if (v.id === this.temp.id) {
+                const index = this.list.indexOf(v)
+                this.list.splice(index, 1, this.temp)
+                break
+              }
+            }
+            this.dialogFormVisible = false
+            this.$notify({
+              title: '成功',
+              message: '更新成功',
+              type: 'success',
+              duration: 2000
+            })
+          })
+        }
+      })
+    },
+    deleteAllRecords() {
       this.$confirm('该操作会永久删除所有信息，是否继续？', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
         this.$message({ type: 'success', message: '删除成功' })
-        // api /members delete
-        this.members = null
+        // api /records delete
+        this.list = null
       }).catch(() => {
         this.$message({
           type: 'info',
           message: '已取消删除'
         })
       })
-    },
-    handleCurrentChange(cpage) {
-      this.currentPage = cpage
     }
   }
 }
 </script>
 
-<style scoped>
-
-</style>

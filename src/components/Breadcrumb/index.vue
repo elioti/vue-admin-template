@@ -10,6 +10,7 @@
 </template>
 
 <script>
+// import { generateTitle } from '@/utils/i18n'
 import pathToRegexp from 'path-to-regexp'
 
 export default {
@@ -27,14 +28,14 @@ export default {
     this.getBreadcrumb()
   },
   methods: {
+    // generateTitle,
     getBreadcrumb() {
       let matched = this.$route.matched.filter(item => item.name)
 
       const first = matched[0]
-      if (first && first.name !== 'dashboard') {
-        matched = [{ path: '/dashboard', meta: { title: 'Dashboard' }}].concat(matched)
+      if (first && first.name.trim().toLocaleLowerCase() !== 'Dashboard'.toLocaleLowerCase()) {
+        matched = [{ path: '/dashboard', meta: { title: '首页' }}].concat(matched)
       }
-
       this.levelList = matched.filter(item => item.meta && item.meta.title && item.meta.breadcrumb !== false)
     },
     pathCompile(path) {
@@ -60,7 +61,7 @@ export default {
     display: inline-block;
     font-size: 14px;
     line-height: 50px;
-    margin-left: 10px;
+    margin-left: 8px;
     .no-redirect {
       color: #97a8be;
       cursor: text;

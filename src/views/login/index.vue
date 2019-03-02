@@ -1,7 +1,7 @@
 <template>
   <div class="login-container">
     <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" auto-complete="on" label-position="left">
-      <h3 class="title">xxx-xxxx</h3>
+      <h3 class="title">通达大道桥东区</h3>
       <el-form-item prop="username">
         <span class="svg-container">
           <svg-icon icon-class="user" />
@@ -17,12 +17,13 @@
           v-model="loginForm.password"
           name="password"
           auto-complete="on"
-          placeholder="密码"/>
+          placeholder="密码"
+          @keyup.enter.native="handleLogin"/>
         <span class="show-pwd" @click="showPwd">
           <svg-icon :icon-class="pwdType === 'password' ? 'eye' : 'eye-open'" />
         </span>
       </el-form-item>
-
+      <!--
       <el-form-item>
         <span class="svg-container">
           <svg-icon icon-class="code" />
@@ -37,9 +38,9 @@
           </template>
         </el-input>
       </el-form-item>
-
+      -->
       <el-form-item>
-        <el-button :loading="loading" type="primary" style="width:100%;" @click.native.prevent="handleLogin">
+        <el-button :loading="loading" size="medium" type="primary" style="width:100%;" @click.native.prevent="handleLogin">
           登录
         </el-button>
       </el-form-item>
@@ -48,21 +49,13 @@
 </template>
 
 <script>
-import { isvalidUsername } from '@/utils/validate'
-
+import { Message } from 'element-ui'
 export default {
   name: 'Login',
   data() {
-    const validateUsername = (rule, value, callback) => {
-      if (!isvalidUsername(value)) {
-        callback(new Error('请输入正确的用户名'))
-      } else {
-        callback()
-      }
-    }
     const validatePass = (rule, value, callback) => {
-      if (value.length < 5) {
-        callback(new Error('密码不能小于5位'))
+      if (value.length < 6) {
+        callback(new Error('密码不能小于6位'))
       } else {
         callback()
       }
@@ -74,14 +67,11 @@ export default {
         captcha: ''
       },
       loginRules: {
-        username: [{ required: true, trigger: 'blur', validator: validateUsername }],
         password: [{ required: true, trigger: 'blur', validator: validatePass }]
       },
       loading: false,
       pwdType: 'password',
-      redirect: undefined,
-      captchaBaseUrl: 'http://103.94.77.31:9998/verifycode?',
-      captchaUrl: 'http://103.94.77.31:9998/verifycode?'
+      redirect: undefined
     }
   },
   watch: {
@@ -104,21 +94,30 @@ export default {
       this.$refs.loginForm.validate(valid => {
         if (valid) {
           this.loading = true
-          this.$store.dispatch('Login', this.loginForm).then(() => {
+          this.$store.dispatch('LoginByUsername', this.loginForm).then(() => {
             this.loading = false
             this.$router.push({ path: this.redirect || '/' })
-          }).catch(() => {
+          }).catch(error => {
             this.loading = false
+            let loginerr
+            if (error.response && error.response.status === 400) {
+              loginerr = error.response.data['non_field_errors'][0]
+            }
+            Message({
+              message: loginerr || error.message,
+              type: 'error',
+              duration: 5 * 1000
+            })
           })
         } else {
           console.log('error submit!!')
           return false
         }
       })
-    },
-    captchaHandler() {
-      this.captchaUrl = this.captchaBaseUrl + Math.random()
     }
+    // captchaHandler() {
+    //   this.captchaUrl = this.captchaBaseUrl + Math.random()
+    // }
   }
 }
 </script>

@@ -18,9 +18,9 @@
           start-placeholder="开始日期"
           end-placeholder="结束日期"/>
       </el-form-item>
-      <el-form-item>
-        <el-button type="info" @click="getList">重置表单</el-button>
-        <el-button type="primary" @click="handleCommit">提交保存</el-button>
+      <el-form-item style="margin-top: 20px;margin-left: 80px">
+        <el-button size="medium" type="info" @click="getList">重置表单</el-button>
+        <el-button size="medium" type="primary" @click="handleCommit">提交保存</el-button>
       </el-form-item>
     </el-form>
   </div>
@@ -28,7 +28,7 @@
 <script>
 import { createInfo, getInfo, updateInfo } from '../../api/info'
 export default {
-  name: 'Index',
+  name: 'Info',
   data() {
     return {
       list: {
