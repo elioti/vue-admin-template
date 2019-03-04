@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 增
 export function createRule(data) {
   return request({
-    url: '/rules/',
+    url: '/api/rules/',
     method: 'post',
     data
   })
@@ -11,14 +11,14 @@ export function createRule(data) {
 // 删
 export function delteRule(id) {
   return request({
-    url: 'rules/' + id + '/',
+    url: '/api/rules/' + id + '/',
     method: 'delete'
   })
 }
 // 改
 export function updateRule(id, data) {
   return request({
-    url: '/rules/' + id + '/',
+    url: '/api/rules/' + id + '/',
     method: 'patch',
     data
   })
@@ -26,7 +26,7 @@ export function updateRule(id, data) {
 // 查
 export function getRule(params) {
   return request({
-    url: '/rules/',
+    url: '/api/rules/',
     params
   })
 }

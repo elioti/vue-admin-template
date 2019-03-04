@@ -2,7 +2,7 @@ import request from '@/utils/request'
 // 增
 export function createInfo(data) {
   return request({
-    url: '/settings/',
+    url: '/api/settings/',
     method: 'post',
     data
   })
@@ -10,13 +10,13 @@ export function createInfo(data) {
 // 查
 export function getInfo() {
   return request({
-    url: '/settings/'
+    url: '/api/settings/'
   })
 }
 // 改
 export function updateInfo(id, data) {
   return request({
-    url: '/settings/' + id + '/',
+    url: '/api/settings/' + id + '/',
     method: 'patch',
     data
   })

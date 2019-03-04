@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 增
 export function createUser(data) {
   return request({
-    url: '/users/',
+    url: '/api/users/',
     method: 'post',
     data
   })
@@ -11,14 +11,14 @@ export function createUser(data) {
 // 删
 export function delteUser(id) {
   return request({
-    url: 'users/' + id + '/',
+    url: '/api/users/' + id + '/',
     method: 'delete'
   })
 }
 // 改
 export function updateUser(id, data) {
   return request({
-    url: '/users/' + id + '/',
+    url: '/api/users/' + id + '/',
     method: 'patch',
     data
   })
@@ -26,7 +26,7 @@ export function updateUser(id, data) {
 // 查
 export function getUser(params) {
   return request({
-    url: '/users/',
+    url: '/api/users/',
     params
   })
 }

@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 增
 export function createPrize(data) {
   return request({
-    url: '/prizes/',
+    url: '/api/prizes/',
     method: 'post',
     data
   })
@@ -11,14 +11,14 @@ export function createPrize(data) {
 // 删
 export function deltePrize(id) {
   return request({
-    url: 'prizes/' + id + '/',
+    url: '/api/prizes/' + id + '/',
     method: 'delete'
   })
 }
 // 改
 export function updatePrize(id, data) {
   return request({
-    url: '/prizes/' + id + '/',
+    url: '/api/prizes/' + id + '/',
     method: 'patch',
     data
   })
@@ -26,7 +26,7 @@ export function updatePrize(id, data) {
 // 查
 export function getPrize(params) {
   return request({
-    url: '/prizes/',
+    url: '/api/prizes/',
     params
   })
 }
