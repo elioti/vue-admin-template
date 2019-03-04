@@ -5,8 +5,8 @@
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">搜索</el-button>
       <el-button class="filter-item" type="primary" icon="el-icon-edit" @click="handleCreate">添加</el-button>
       <el-button :loading="downloadLoading" class="filter-item" type="primary" icon="el-icon-download" @click="handleDownload">下载</el-button>
-      <el-button class="filter-item" type="primary">一键派送</el-button>
-      <el-button class="filter-item" type="danger">一键清空</el-button>
+      <el-button class="filter-item" type="primary" @click="sendAllRecords">一键派送</el-button>
+      <el-button class="filter-item" type="danger" @click="deleteAllRecords">一键清空</el-button>
     </div>
     <el-table
       v-loading="listLoading"
@@ -207,17 +207,17 @@ export default {
       const title = '抽奖' + new Date().toDateString()
       getRecord({ page_size: 5000 }).then(response => {
         this.down = response.data.results
-      })
-      import('@/vendor/Export2Excel').then(excel => {
-        const tHeader = ['会员账号', '中奖礼品', '中奖时间', '抽奖IP', '是否发送']
-        const filterVal = ['user', 'prizeName', 'datetime', 'ip', 'isSend']
-        const data = this.formatJson(filterVal, this.down)
-        excel.export_json_to_excel({
-          header: tHeader,
-          data,
-          filename: title
+        import('@/vendor/Export2Excel').then(excel => {
+          const tHeader = ['会员账号', '中奖礼品', '中奖时间', '抽奖IP', '是否发送']
+          const filterVal = ['user', 'prizeName', 'datetime', 'ip', 'isSend']
+          const data = this.formatJson(filterVal, this.down)
+          excel.export_json_to_excel({
+            header: tHeader,
+            data,
+            filename: title
+          })
+          this.downloadLoading = false
         })
-        this.downloadLoading = false
       })
     },
     formatJson(filterVal, jsonData) {
@@ -311,13 +311,31 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        this.$message({ type: 'success', message: '删除成功' })
-        // api /records delete
-        this.list = null
+        delteRecord('all').then(() => {
+          this.$message({ type: 'success', message: '删除成功' })
+          this.list = null
+        })
       }).catch(() => {
         this.$message({
           type: 'info',
           message: '已取消删除'
+        })
+      })
+    },
+    sendAllRecords() {
+      this.$confirm('该操作会派送所有记录，是否继续？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        updateRecord('send').then(() => {
+          this.$message({ type: 'success', message: '派送成功' })
+          this.getList()
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消派送'
         })
       })
     }

@@ -4,7 +4,7 @@
       <el-input v-model="listQuery.user" placeholder="请输入会员账号" style="width: 200px" class="filter-item" clearable @keyup.enter.native="handleFilter" />
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">搜索</el-button>
       <el-button class="filter-item" type="primary" icon="el-icon-edit" @click="handleCreate">添加</el-button>
-      <el-button class="filter-item" type="danger">一键清空</el-button>
+      <el-button class="filter-item" type="danger" @click="deleteAllRecords">一键清空</el-button>
     </div>
     <el-table
       v-loading="listLoading"
@@ -242,9 +242,10 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        this.$message({ type: 'success', message: '删除成功' })
-        // api /records delete
-        this.list = null
+        delteRule('all').then(() => {
+          this.$message({ type: 'success', message: '删除成功' })
+          this.list = null
+        })
       }).catch(() => {
         this.$message({
           type: 'info',
