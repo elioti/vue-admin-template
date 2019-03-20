@@ -73,8 +73,8 @@
         <el-form-item label="会员账号">
           <el-input v-model="temp.user"/>
         </el-form-item>
-        <el-form-item label="中奖礼品">
-          <el-input v-model="temp.prizeId"/>
+        <el-form-item label="礼品名称">
+          <el-input v-model="temp.prizeName"/>
         </el-form-item>
         <el-form-item v-if="dialogStatus === 'create'" label="中奖时间" prop="datetime">
           <el-date-picker v-model="temp.datetime" type="datetime" value-format="yyyy-MM-dd HH:mm:ss" placeholder="选择时间"/>
@@ -142,7 +142,7 @@ export default {
       temp: {
         id: undefined,
         user: '',
-        prizeId: undefined,
+        prizeName: undefined,
         datetime: new Date()
       }
     }

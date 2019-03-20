@@ -24,10 +24,9 @@ export function updatePrize(id, data) {
   })
 }
 // 查
-export function getPrize(params) {
+export function getPrize() {
   return request({
-    url: '/api/prizes/',
-    params
+    url: '/api/prizes/?type=category'
   })
 }
 

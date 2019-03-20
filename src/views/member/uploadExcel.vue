@@ -20,8 +20,8 @@ export default {
   components: { UploadExcelComponent },
   data() {
     return {
-      tableData: [{ user: '示例', sequence: '1|2|?|3', score: 0 }],
-      tableHeader: ['user', 'sequence', 'score'],
+      tableData: [{ user: '示例', sequence: '1|2|?|3', score: 0, type: '默认' }],
+      tableHeader: ['user', 'sequence', 'score', 'type'],
       commit: false
     }
   },

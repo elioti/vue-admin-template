@@ -2,45 +2,60 @@
 <template>
   <div class="app-container">
     <el-button type="success" @click="addPrize">添加礼品</el-button>
-    <el-table
-      v-loading="prizeLoading"
-      :data="prizes"
-      element-loading-text="获取中"
-      border
-      fit
-      highlight-current-row
-      style="margin-top: 20px">
-      <el-table-column align="center" label="礼品编号" min-width="12.5%">
-        <template slot-scope="scope">
-          {{ scope.row.code }}
-        </template>
-      </el-table-column>
-      <el-table-column align="center" label="礼品名称" min-width="37.5%">
-        <template slot-scope="scope">
-          {{ scope.row.prize_name }}
-        </template>
-      </el-table-column>
-      <el-table-column align="center" label="中奖权重" min-width="12.5%">
-        <template slot-scope="scope">
-          {{ scope.row.probability }}
-        </template>
-      </el-table-column>
-      <el-table-column label="中奖率" min-width="12.5%" align="center">
-        <template slot-scope="scope">
-          {{ scope.row.probability/totalProb | toPer }}
-        </template>
-      </el-table-column>
-      <el-table-column align="center" label="操作" min-width="25%">
-        <template slot-scope="scope">
-          <el-button type="primary" @click="editPrize(scope.row)">编辑</el-button>
-          <el-button type="danger" @click="deletePrize(scope.row)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <el-tabs v-if="Data" v-model="tabName" type="border-card" style="margin-top: 20px">
+      <el-tab-pane
+        v-for="item in category"
+        :key="item.name"
+        :label="item.name"
+        :name="item.name">
+        <el-table
+          v-loading="prizeLoading"
+          :data="item.prizes"
+          element-loading-text="获取中"
+          border
+          fit
+          highlight-current-row
+          style="margin-top: 20px">
+          <el-table-column align="center" label="礼品编号" min-width="12.5%">
+            <template slot-scope="scope">
+              {{ scope.row.code }}
+            </template>
+          </el-table-column>
+          <el-table-column align="center" label="礼品名称" min-width="37.5%">
+            <template slot-scope="scope">
+              {{ scope.row.prize_name }}
+            </template>
+          </el-table-column>
+          <el-table-column align="center" label="中奖权重" min-width="12.5%">
+            <template slot-scope="scope">
+              {{ scope.row.probability }}
+            </template>
+          </el-table-column>
+          <el-table-column label="中奖率" min-width="12.5%" align="center">
+            <template slot-scope="scope">
+              {{ scope.row.probability/totalProb(item.prizes) | toPer }}
+            </template>
+          </el-table-column>
+          <el-table-column align="center" label="操作" min-width="25%">
+            <template slot-scope="scope">
+              <el-button type="primary" @click="editPrize(scope.row)">编辑</el-button>
+              <el-button type="danger" @click="deletePrize(scope.row)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-tab-pane>
+    </el-tabs>
+    <div v-else style="margin-top: 20px">暂无数据</div>
     <el-dialog
       :title="titleMap[dialogStatus]"
       :visible.sync="dialogFormVisible">
       <el-form :model="form">
+        <el-form-item label="分组">
+          <el-autocomplete
+            v-model="form.grade"
+            :fetch-suggestions="querySearch"
+            placeholder="请输入分组"/>
+        </el-form-item>
         <el-form-item label="礼品编号">
           <el-input v-model="form.code"/>
         </el-form-item>
@@ -77,6 +92,9 @@ export default {
   },
   data() {
     return {
+      category: [],
+      Data: true,
+      tabName: undefined,
       prizes: null,
       prizeLoading: true,
       titleMap: {
@@ -86,44 +104,50 @@ export default {
       dialogStatus: '',
       dialogFormVisible: false,
       form: {
+        grade: '',
         code: '',
         prize_name: '',
         probability: ''
       }
     }
   },
-  computed: {
-    totalProb() {
-      let total = 0
-      this.prizes.forEach(function(value, index, array) {
-        total += parseFloat(value.probability)
-      })
-      return total
-    }
-  },
   created() {
     this.fetchPrizes()
   },
   methods: {
+    totalProb(prizes) {
+      let total = 0
+      prizes.forEach(function(value, index, array) {
+        total += parseFloat(value.probability)
+      })
+      return total
+    },
+    querySearch(queryString, cb) {
+      getPrize().then(response => {
+        if (response.data.length === 0) {
+          cb([{ value: '默认' }])
+        } else {
+          cb(response.data.map(item => { return { value: item['name'] } }))
+        }
+      })
+    },
     fetchPrizes() {
       this.prizeLoading = true
       // api: /prizes
       getPrize().then(response => {
-        this.prizes = response.data.results
+        this.category = response.data
+        if (response.data.length === 0) { this.Data = false; return } else { this.Data = true }
+        if (this.tabName === '0' || response.data.map(item => item['name']).indexOf(this.tabName) === -1) {
+          this.tabName = response.data[0]['name']
+        }
       })
-      // this.prizes = [
-      //   { code: 1, prize_name: '8元现金', probability: '21.3' },
-      //   { code: 2, prize_name: '18元现金', probability: '2.3' },
-      //   { code: 3, prize_name: '28元现金', probability: '23.3' },
-      //   { code: 4, prize_name: '38元现金', probability: '1.3' },
-      //   { code: 5, prize_name: '48元现金', probability: '5.3' }
-      // ]
       this.prizeLoading = false
     },
     addPrize() {
       this.dialogFormVisible = true
       this.dialogStatus = 'addPrize'
       this.form = {
+        grade: '',
         code: '',
         prize_name: '',
         probability: ''
@@ -137,7 +161,7 @@ export default {
           type: 'success',
           duration: 2000
         })
-        this.prizes.splice(row.$index, 1)
+        this.fetchPrizes()
       })
     },
     editPrize(row) {
@@ -149,13 +173,7 @@ export default {
       if (this.dialogStatus === 'editPrize') {
         const tempData = Object.assign({}, this.form)
         updatePrize(tempData.id, tempData).then(() => {
-          for (const v of this.prizes) {
-            if (v.id === this.form.id) {
-              const index = this.prizes.indexOf(v)
-              this.prizes.splice(index, 1, this.form)
-              break
-            }
-          }
+          this.fetchPrizes()
           this.dialogFormVisible = false
           this.$notify({
             title: '成功',
@@ -166,7 +184,7 @@ export default {
         })
       } else {
         createPrize(this.form).then(response => {
-          this.prizes.push(response.data)
+          this.fetchPrizes()
           this.dialogFormVisible = false
           this.$notify({
             title: '成功',

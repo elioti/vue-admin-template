@@ -25,6 +25,11 @@
           <span>{{ scope.row.user }}</span>
         </template>
       </el-table-column>
+      <el-table-column label="会员类别" align="center" min-width="80px">
+        <template slot-scope="scope">
+          <span>{{ scope.row.type }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="活动次数" align="center" min-width="60px">
         <template slot-scope="scope">
           <span>{{ scope.row.score }}</span>
@@ -54,6 +59,12 @@
         <el-form-item label="会员账号">
           <el-input v-model="temp.user"/>
         </el-form-item>
+        <el-form-item label="会员类别">
+          <el-autocomplete
+            v-model="temp.type"
+            :fetch-suggestions="querySearch"
+            placeholder="请输入分组"/>
+        </el-form-item>
         <el-form-item label="总顺序">
           <el-input v-model="temp.sequence"/>
         </el-form-item>
@@ -76,6 +87,7 @@
 </template>
 <script>
 import { getRule, createRule, updateRule, delteRule } from '../../api/rule'
+import { getPrize } from '../../api/prize'
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
 
 export default {
@@ -112,6 +124,7 @@ export default {
       temp: {
         id: undefined,
         user: '',
+        type: '',
         score: undefined,
         sequence: undefined,
         addTime: new Date(),
@@ -123,6 +136,15 @@ export default {
     this.getList()
   },
   methods: {
+    querySearch(queryString, cb) {
+      getPrize().then(response => {
+        if (response.data.length === 0) {
+          cb([{ value: '默认' }])
+        } else {
+          cb(response.data.map(item => { return { value: item['name'] } }))
+        }
+      })
+    },
     seqeFilter(row) {
       const orderList = row.sequence.split('|')
       return orderList.map((v, i) => {
