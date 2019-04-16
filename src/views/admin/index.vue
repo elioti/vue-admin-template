@@ -46,10 +46,10 @@
         <el-form-item label="会员账号" prop="username">
           <el-input v-model="temp.username"/>
         </el-form-item>
-        <el-form-item v-show="dialogStatus==='create'" label="密码" prop="password">
+        <el-form-item v-if="dialogStatus==='create'" label="密码" prop="password">
           <el-input v-model="temp.password" type="password"/>
         </el-form-item>
-        <el-form-item v-show="dialogStatus==='create'" label="密码确认" prop="passwordCheck">
+        <el-form-item v-if="dialogStatus==='create'" label="密码确认" prop="passwordCheck">
           <el-input v-model="temp.passwordCheck" type="password"/>
         </el-form-item>
         <el-form-item label="超级用户">
@@ -177,16 +177,27 @@ export default {
     },
     // 处理删除记录
     handleDelete(row) {
-      delteUser(row.id).then(() => {
-        // 删除细节  todo
-        this.$notify({
-          title: '成功',
-          message: '删除成功',
-          type: 'success',
-          duration: 2000
+      this.$confirm(`该操作会删除账号：${row.username}，是否继续？`, '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        delteUser(row.id).then(() => {
+          // 删除细节  todo
+          this.$notify({
+            title: '成功',
+            message: '删除成功',
+            type: 'success',
+            duration: 2000
+          })
+          const index = this.list.indexOf(row)
+          this.list.splice(index, 1)
         })
-        const index = this.list.indexOf(row)
-        this.list.splice(index, 1)
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消删除'
+        })
       })
     },
     sortChange(data) {

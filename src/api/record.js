@@ -9,10 +9,11 @@ export function createRecord(data) {
   })
 }
 // 删
-export function delteRecord(id) {
+export function delteRecord(id, data = []) {
   return request({
     url: '/api/records/' + id + '/',
-    method: 'delete'
+    method: 'delete',
+    data: data
   })
 }
 // 改

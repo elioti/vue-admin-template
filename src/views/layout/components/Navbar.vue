@@ -7,7 +7,9 @@
     <div class="right-menu">
       <template v-if="device!=='mobile'">
         <error-log class="errLog-container right-menu-item hover-effect"/>
-
+        <audio id="audio" preload="auto" loop>
+          <source src="@/assets/sound/sound.mp3">
+        </audio>
         <screenfull class="right-menu-item hover-effect"/>
 
         <el-tooltip content="布局大小" effect="dark" placement="bottom">

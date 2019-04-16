@@ -67,9 +67,23 @@ export const constantRouterMap = [
     children: [
       {
         path: 'dashboard',
-        component: () => import('@/views/dashboard/june'),
+        component: () => import('@/views/information/index'),
         name: 'Dashboard',
         meta: { title: '首页', icon: 'dashboard', noCache: true, affix: true }
+      }
+    ]
+  },
+
+  {
+    path: '/upload',
+    component: Layout,
+    redirect: 'noredirect',
+    children: [
+      {
+        path: 'upload-excel',
+        component: () => import('@/views/information/uploadExcel'),
+        name: 'UploadQuery',
+        meta: { title: '导入名单', icon: 'excel' }
       }
     ]
   }
@@ -82,73 +96,6 @@ export default new Router({
 })
 
 export const asyncRouterMap = [
-  {
-    path: '/prize',
-    component: Layout,
-    redirect: 'noredirect',
-    children: [
-      {
-        path: 'index',
-        component: () => import('@/views/prize/index'),
-        name: 'Prize',
-        meta: { title: '奖品管理', icon: 'component', roles: ['admin'] }
-      }
-    ]
-  },
-
-  {
-    path: '/info',
-    component: Layout,
-    redirect: 'noredirect',
-    children: [
-      {
-        path: 'index',
-        component: () => import('@/views/info/index'),
-        name: 'Info',
-        meta: { title: '活动设置', icon: 'tab', roles: ['admin'] }
-      }
-    ]
-  },
-
-  {
-    path: '/member',
-    component: Layout,
-    redirect: 'member/index',
-    name: 'User',
-    meta: {
-      title: '活动会员',
-      icon: 'peoples',
-      roles: ['admin']
-    },
-    children: [
-      {
-        path: 'index',
-        component: () => import('@/views/member/index'),
-        name: 'Member',
-        meta: { title: '会员编辑', icon: 'documentation', roles: ['admin'] }
-      },
-      {
-        path: 'upload-excel',
-        component: () => import('@/views/member/uploadExcel'),
-        name: 'UploadExcel',
-        meta: { title: '导入名单', icon: 'excel', roles: ['admin'] }
-      }
-    ]
-  },
-
-  {
-    path: '/record',
-    component: Layout,
-    redirect: 'noredirect',
-    children: [
-      {
-        path: 'index',
-        component: () => import('@/views/record/index'),
-        name: 'Record',
-        meta: { title: '抽奖记录', icon: 'list' }
-      }
-    ]
-  },
 
   {
     path: '/admin',

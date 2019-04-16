@@ -1,13 +1,13 @@
 <template>
   <div class="app-container">
     <upload-excel-component :on-success="handleSuccess" :before-upload="beforeUpload"/>
+    <el-table :data="tableData" border highlight-current-row style="width: 100%;margin-top:20px;">
+      <el-table-column v-for="item of tableHeader" :prop="item" :label="item" :key="item"/>
+    </el-table>
     <div v-show="commit" class="upload-commit">
       <el-button class="filter-item" type="primary" size="medium" @click="handleReset">重置</el-button>
       <el-button class="filter-item" type="primary" size="medium" @click="handleUpload">提交</el-button>
     </div>
-    <el-table :data="tableData" border highlight-current-row style="width: 100%;margin-top:20px;">
-      <el-table-column v-for="item of tableHeader" :prop="item" :label="item" :key="item"/>
-    </el-table>
   </div>
 </template>
 
@@ -20,8 +20,8 @@ export default {
   components: { UploadExcelComponent },
   data() {
     return {
-      tableData: [{ user: '示例', sequence: '1,2,?,3', score: 0, type: '默认' }],
-      tableHeader: ['user', 'sequence', 'score', 'type'],
+      tableData: [{ user: '示例', sequence: '1|2|?|3', score: 0 }],
+      tableHeader: ['user', 'sequence', 'score'],
       commit: false
     }
   },

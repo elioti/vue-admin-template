@@ -146,14 +146,14 @@ export default {
       })
     },
     seqeFilter(row) {
-      const orderList = row.sequence.split('|')
+      const orderList = row.sequence.split(',')
       return orderList.map((v, i) => {
         if (i + 1 < row.flag) {
           return '<span style="color:red">' + v + '</span>'
         } else {
           return v
         }
-      }).join('|')
+      }).join(',')
     },
     getList() {
       this.listLoading = true
